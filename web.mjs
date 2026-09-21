@@ -1,210 +1,168 @@
-import daysData from "./days.json" with { type: "json" };
+import { formatMonthYear, getOccurrenceDate } from "./common.mjs";
 
-import { MONTHS, resolveCommemorativeDays, generateICal } from "./common.mjs";
+let currentDate = new Date();
+let commemorativeDays = [];
 
-/* =========================
-   STATE (current selection)
-========================= */
-
-let selectedMonth = new Date().getMonth();
-let selectedYear = new Date().getFullYear();
-
-let yearRangeStart = Math.floor((selectedYear - 1) / 25) * 25 + 1;
-
-/* =========================
-   INIT
-========================= */
-
-window.onload = () => {
-  populateMonths();
-  updateYearRangeLabel();
-  bindEvents();
-  renderCalendar();
-};
-
-/* =========================
-   MONTH DROPDOWN
-========================= */
-
-function populateMonths() {
-  const select = document.getElementById("monthSelect");
-
-  Object.keys(MONTHS).forEach((name) => {
-    const option = document.createElement("option");
-    option.value = MONTHS[name];
-    option.textContent = name;
-
-    if (MONTHS[name] === selectedMonth) {
-      option.selected = true;
-    }
-
-    select.appendChild(option);
+fetch("./days.json")
+  .then((response) => response.json())
+  .then((data) => {
+    commemorativeDays = data;
+    updateUI();
   });
+
+function updateUI() {
+  document.getElementById("month-year").textContent =
+    formatMonthYear(currentDate);
+
+  updateYearSelect();
+
+  document.getElementById("month-select").value = currentDate.getMonth();
+
+  document.getElementById("year-select").value = currentDate.getFullYear();
+
+  renderCalendar();
 }
 
-/* =========================
-   EVENT LISTENERS
-========================= */
-
-function bindEvents() {
-  // Month dropdown change
-  document.getElementById("monthSelect").onchange = (e) => {
-    selectedMonth = Number(e.target.value);
-    renderCalendar();
-  };
-
-  // Previous month
-  document.getElementById("prevMonth").onclick = () => {
-    selectedMonth--;
-
-    if (selectedMonth < 0) {
-      selectedMonth = 11;
-      selectedYear--;
-    }
-
-    renderCalendar();
-  };
-
-  // Next month
-  document.getElementById("nextMonth").onclick = () => {
-    selectedMonth++;
-
-    if (selectedMonth > 11) {
-      selectedMonth = 0;
-      selectedYear++;
-    }
-
-    renderCalendar();
-  };
-
-  // Previous 25-year range
-  document.getElementById("prevRange").onclick = () => {
-    yearRangeStart -= 25;
-    updateYearRangeLabel();
-  };
-
-  // Next 25-year range
-  document.getElementById("nextRange").onclick = () => {
-    yearRangeStart += 25;
-    updateYearRangeLabel();
-  };
-
-  // Toggle year picker
-  document.getElementById("yearRangeBtn").onclick = () => {
-    toggleYearPicker();
-  };
-
-  // Export iCal file
-  document.getElementById("exportIcal").onclick = () => {
-    const ics = generateICal(daysData, selectedYear);
-
-    const blob = new Blob([ics], { type: "text/calendar" });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "commemorative-days.ics";
-    a.click();
-
-    URL.revokeObjectURL(url);
-  };
+function changeMonth(amount) {
+  currentDate.setMonth(currentDate.getMonth() + amount);
+  updateUI();
 }
 
-/* =========================
-   YEAR RANGE + PICKER
-========================= */
+function populateSelectors() {
+  const monthSelect = document.getElementById("month-select");
+  const yearSelect = document.getElementById("year-select");
 
-function updateYearRangeLabel() {
-  document.getElementById("yearRangeBtn").textContent =
-    `${yearRangeStart}-${yearRangeStart + 24}`;
-}
+  const months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
 
-function toggleYearPicker() {
-  const picker = document.getElementById("yearPicker");
+  months.forEach((month, index) => {
+    const option = document.createElement("option");
+    option.value = index;
+    option.textContent = month;
+    monthSelect.appendChild(option);
+  });
 
-  if (picker.style.display === "none") {
-    picker.style.display = "grid";
-    renderYearPicker();
-  } else {
-    picker.style.display = "none";
+  for (let year = 1900; year <= 2100; year++) {
+    const option = document.createElement("option");
+    option.value = year;
+    option.textContent = year;
+    yearSelect.appendChild(option);
   }
 }
 
-function renderYearPicker() {
-  const picker = document.getElementById("yearPicker");
-  picker.innerHTML = "";
+function jumpToDate() {
+  const month = Number(document.getElementById("month-select").value);
 
-  for (let year = yearRangeStart; year <= yearRangeStart + 24; year++) {
-    const btn = document.createElement("button");
-    btn.textContent = year;
+  const year = Number(document.getElementById("year-select").value);
 
-    btn.onclick = () => {
-      selectedYear = year;
-      picker.style.display = "none";
-      renderCalendar();
-    };
+  currentDate = new Date(year, month, 1);
 
-    picker.appendChild(btn);
-  }
+  updateUI();
 }
 
-/* =========================
-   CALENDAR RENDERING
-========================= */
+function updateYearSelect() {
+  const year = currentDate.getFullYear();
+  const yearSelect = document.getElementById("year-select");
+
+  if (
+    (year < 1900 || year > 2100) &&
+    !yearSelect.querySelector(`option[value="${year}"]`)
+  ) {
+    const option = document.createElement("option");
+    option.value = year;
+    option.textContent = year;
+    yearSelect.appendChild(option);
+  }
+}
 
 function renderCalendar() {
-  const grid = document.getElementById("grid");
+  const calendar = document.getElementById("calendar");
 
-  // Month title
-  const monthName = Object.keys(MONTHS).find(
-    (k) => MONTHS[k] === selectedMonth,
-  );
+  calendar.innerHTML = "";
 
-  document.getElementById("title").textContent = `${monthName} ${selectedYear}`;
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
 
-  grid.innerHTML = "";
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-  // First day of month
-  const firstDay = new Date(selectedYear, selectedMonth, 1).getDay();
+  const firstDay = new Date(year, month, 1).getDay();
 
-  // Number of days in month
-  const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
-
-  // Get all events for selected year/month
-  const events = resolveCommemorativeDays(daysData, selectedYear).filter(
-    (e) => new Date(e.date).getMonth() === selectedMonth,
-  );
-
-  // Faster lookup using map (performance improvement)
-  const eventMap = new Map(events.map((e) => [e.dayNumber, e]));
-
-  /* Weekday headers */
-  ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].forEach((day) => {
-    const el = document.createElement("div");
-    el.className = "day-name";
-    el.textContent = day;
-    grid.appendChild(el);
+  const monthName = currentDate.toLocaleString("default", {
+    month: "long",
   });
 
-  /* Empty cells before first day */
+  const monthEvents = getMonthEvents(year, month, monthName);
+
   for (let i = 0; i < firstDay; i++) {
-    grid.appendChild(document.createElement("div"));
+    const emptyCell = document.createElement("div");
+    calendar.appendChild(emptyCell);
   }
 
-  /* Days of month */
   for (let day = 1; day <= daysInMonth; day++) {
-    const cell = document.createElement("div");
-    cell.className = "day";
+    const events = monthEvents.filter((e) => e.date === day);
+    const cell = createCalendarCell(day, events);
 
-    const match = eventMap.get(day);
-
-    if (match) {
-      cell.classList.add("commemorative");
-      cell.innerHTML = `<strong>${day}</strong><br>${match.name}`;
-    } else {
-      cell.textContent = day;
-    }
-
-    grid.appendChild(cell);
+    calendar.appendChild(cell);
   }
 }
+
+function getMonthEvents(year, month, monthName) {
+  const monthEvents = [];
+  for (const item of commemorativeDays) {
+    if (item.monthName !== monthName) continue;
+
+    const eventDate = getOccurrenceDate(
+      year,
+      month,
+      item.dayName,
+      item.occurrence,
+    );
+    monthEvents.push({
+      date: eventDate,
+      name: item.name,
+    });
+  }
+  return monthEvents;
+}
+
+function createCalendarCell(day, events) {
+  const cell = document.createElement("div");
+
+  cell.classList.add("day");
+
+  if (events.length > 0) {
+    cell.innerHTML = `
+			<div>${day}</div>
+			${events.map((e) => `<div>${e.name}</div>`).join("")}
+			`;
+  } else {
+    cell.textContent = day;
+  }
+  return cell;
+}
+
+window.onload = () => {
+  document.getElementById("prev-btn").onclick = () => changeMonth(-1);
+  document.getElementById("next-btn").onclick = () => changeMonth(1);
+  populateSelectors();
+
+  document
+    .getElementById("month-select")
+    .addEventListener("change", jumpToDate);
+
+  document.getElementById("year-select").addEventListener("change", jumpToDate);
+
+  updateUI();
+};

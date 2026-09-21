@@ -1,62 +1,49 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>Commemorative Calendar</title>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Days Calendar</title>
+  <script type="module" src="web.mjs"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
 
-    <link rel="stylesheet" href="styles.css" />
+<body>
+  <main>
 
-    <script type="module" src="web.mjs"></script>
-  </head>
+    <h1 id="month-year"></h1>
 
-  <body>
-    <main id="calendar" aria-label="Commemorative calendar application">
-      <!-- MAIN HEADING -->
-      <h1>Commemorative Calendar</h1>
+    <div class="controls">
+      <div>
+        <label for="month-select">Month</label>
+        <select id="month-select"></select>
+      </div>
+      <div>
+        <label for="year-select">Year</label>
+        <select id="year-select"></select>
+      </div>
+    </div>
 
-      <!-- CONTROLS -->
-      <section class="top-controls" aria-label="Calendar controls">
-        <label for="monthSelect">Month</label>
-        <select id="monthSelect" aria-label="Select month"></select>
+    <div class="navigation">
+      <button id="prev-btn">Previous</button>
+      <button id="next-btn">Next</button>
+    </div>
 
-        <button id="prevRange" aria-label="Previous 25 year range">&lt;</button>
+    <div id="weekdays">
+      <div>Sun</div>
+      <div>Mon</div>
+      <div>Tue</div>
+      <div>Wed</div>
+      <div>Thu</div>
+      <div>Fri</div>
+      <div>Sat</div>
+    </div>
 
-        <button id="yearRangeBtn" aria-label="Select year range">
-          Select Year Range
-        </button>
+    <div id="calendar"></div>
 
-        <button id="nextRange" aria-label="Next 25 year range">&gt;</button>
+  </main>
+</body>
 
-        <button id="exportIcal" aria-label="Export calendar as iCal file">
-          Export iCal
-        </button>
-      </section>
-
-      <!-- YEAR PICKER -->
-      <div
-        id="yearPicker"
-        class="hidden"
-        aria-label="Year picker"
-        role="dialog"
-      ></div>
-
-      <!-- MONTH HEADER -->
-      <header class="header" aria-label="Month navigation">
-        <button id="prevMonth" aria-label="Previous month">&lt;</button>
-
-        <span id="title" aria-live="polite"></span>
-
-        <button id="nextMonth" aria-label="Next month">&gt;</button>
-      </header>
-
-      <!-- CALENDAR GRID -->
-      <section
-        id="grid"
-        class="grid"
-        aria-label="Monthly calendar grid"
-      ></section>
-    </main>
-  </body>
 </html>
+
